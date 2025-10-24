@@ -1,6 +1,6 @@
 <h1>ExpNo 7 : Implement Alpha-beta pruning of Minimax Search Algorithm for a Simple TIC-TAC-TOE game</h1> 
-<h3>Name:     </h3>
-<h3>Register Number:          </h3>
+<h3>Name: LOKESH P</h3>
+<h3>Register Number: 2305001015 </h3>
 <H3>Aim:</H3>
 <p>
 Implement Alpha-beta pruning of Minimax Search Algorithm for a Simple TIC-TAC-TOE game
@@ -25,196 +25,126 @@ When added to a simple minimax algorithm, it gives the same output but cuts off 
 
 ## PROGRAM
 ```python
-import time
+import math
 
-class Game:
-    def __init__(self):
-        self.initialize_game()
+# Initialize board
+board = [' ' for _ in range(9)]
 
-    def initialize_game(self):
-        self.current_state = [['.','.','.'],
-                              ['.','.','.'],
-                              ['.','.','.']]
+# Print the Tic-Tac-Toe board
+def print_board(board):
+    for i in range(3):
+        print(board[3*i] + ' | ' + board[3*i + 1] + ' | ' + board[3*i + 2])
+        if i < 2:
+            print("---------")
 
-        # Player X always plays first
-        self.player_turn = 'X'
+# Check for winner
+def check_winner(board):
+    win_conditions = [
+        [0,1,2], [3,4,5], [6,7,8],  # Rows
+        [0,3,6], [1,4,7], [2,5,8],  # Columns
+        [0,4,8], [2,4,6]            # Diagonals
+    ]
+    for a, b, c in win_conditions:
+        if board[a] == board[b] == board[c] and board[a] != ' ':
+            return board[a]
+    if ' ' not in board:
+        return 'Draw'
+    return None
 
-    def draw_board(self):
-        for i in range(0, 3):
-            for j in range(0, 3):
-                print('{}|'.format(self.current_state[i][j]), end=" ")
-            print()
-        print()
-    def is_valid(self, px, py):
-        if px < 0 or px > 2 or py < 0 or py > 2:
-            return False
-        elif self.current_state[px][py] != '.':
-            return False
-        else:
-            return True
-    def is_end(self):
-    # Vertical win
-        for i in range(0, 3):
-            if (self.current_state[0][i] != '.' and
-                self.current_state[0][i] == self.current_state[1][i] and
-                self.current_state[1][i] == self.current_state[2][i]):
-                return self.current_state[0][i]
+# Minimax function with Alpha-Beta Pruning
+def minimax(board, depth, is_maximizing, alpha, beta):
+    winner = check_winner(board)
+    if winner == 'X':
+        return -10 + depth
+    elif winner == 'O':
+        return 10 - depth
+    elif winner == 'Draw':
+        return 0
 
-        # Horizontal win
-        for i in range(0, 3):
-            if (self.current_state[i] == ['X', 'X', 'X']):
-                return 'X'
-            elif (self.current_state[i] == ['O', 'O', 'O']):
-                return 'O'
+    if is_maximizing:
+        max_eval = -math.inf
+        for i in range(9):
+            if board[i] == ' ':
+                board[i] = 'O'
+                eval = minimax(board, depth + 1, False, alpha, beta)
+                board[i] = ' '
+                max_eval = max(max_eval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
+        return max_eval
+    else:
+        min_eval = math.inf
+        for i in range(9):
+            if board[i] == ' ':
+                board[i] = 'X'
+                eval = minimax(board, depth + 1, True, alpha, beta)
+                board[i] = ' '
+                min_eval = min(min_eval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break
+        return min_eval
 
-    # Main diagonal win
-        if (self.current_state[0][0] != '.' and
-            self.current_state[0][0] == self.current_state[1][1] and
-            self.current_state[0][0] == self.current_state[2][2]):
-            return self.current_state[0][0]
+# Find the best move for the computer
+def best_move(board):
+    best_val = -math.inf
+    move = None
+    for i in range(9):
+        if board[i] == ' ':
+            board[i] = 'O'
+            move_val = minimax(board, 0, False, -math.inf, math.inf)
+            board[i] = ' '
+            if move_val > best_val:
+                best_val = move_val
+                move = i
+    return move
 
-    # Second diagonal win
-        if (self.current_state[0][2] != '.' and
-            self.current_state[0][2] == self.current_state[1][1] and
-            self.current_state[0][2] == self.current_state[2][0]):
-            return self.current_state[0][2]
+# Main game loop
+def play_game():
+    print("Welcome to Tic-Tac-Toe!")
+    print("You are 'X' and Computer is 'O'")
+    print_board(board)
 
-    # Is the whole board full?
-        for i in range(0, 3):
-            for j in range(0, 3):
-                if self.current_state[i][j] == '.':
-                    return None
-    # It's a tie!
-        return '.'
-    def max_alpha_beta(self, alpha, beta):
-        maxv = -2
-        px = None
-        py = None
+    while True:
+        # Player Move
+        move = int(input("Enter your move (1-9): ")) - 1
+        if board[move] != ' ':
+            print("Invalid move! Try again.")
+            continue
+        board[move] = 'X'
 
-        result = self.is_end()
+        print_board(board)
+        if check_winner(board):
+            result = check_winner(board)
+            print("Result:", result)
+            break
 
-        if result == 'X':
-            return (-1, 0, 0)
-        elif result == 'O':
-            return (1, 0, 0)
-        elif result == '.':
-            return (0, 0, 0)
+        # Computer Move
+        print("Computer is thinking...")
+        comp_move = best_move(board)
+        board[comp_move] = 'O'
+        print_board(board)
 
-        for i in range(0, 3):
-            for j in range(0, 3):
-                if self.current_state[i][j] == '.':
-                    self.current_state[i][j] = 'O'
-                    (m, min_i, in_j) = self.min_alpha_beta(alpha, beta)
-                    if m > maxv:
-                        maxv = m
-                        px = i
-                        py = j
-                    self.current_state[i][j] = '.'
+        result = check_winner(board)
+        if result:
+            print("Result:", result)
+            break
 
-                    # Next two ifs in Max and Min are the only difference between regular algorithm and minimax
-                    if maxv >= beta:
-                        return (maxv, px, py)
-
-                    if maxv > alpha:
-                        alpha = maxv
-
-        return (maxv, px, py)
-
-    def min_alpha_beta(self, alpha, beta):
-
-        minv = 2
-
-        qx = None
-        qy = None
-
-        result = self.is_end()
-
-        if result == 'X':
-            return (-1, 0, 0)
-        elif result == 'O':
-            return (1, 0, 0)
-        elif result == '.':
-            return (0, 0, 0)
-
-        for i in range(0, 3):
-            for j in range(0, 3):
-                if self.current_state[i][j] == '.':
-                    self.current_state[i][j] = 'X'
-                    (m, max_i, max_j) = self.max_alpha_beta(alpha, beta)
-                    if m < minv:
-                        minv = m
-                        qx = i
-                        qy = j
-                    self.current_state[i][j] = '.'
-
-                    if minv <= alpha:
-                        return (minv, qx, qy)
-
-                    if minv < beta:
-                        beta = minv
-
-        return (minv, qx, qy)
-    def play_alpha_beta(self):
-        while True:
-            self.draw_board()
-            self.result = self.is_end()
-
-            if self.result != None:
-                if self.result == 'X':
-                    print('The winner is X!')
-                elif self.result == 'O':
-                    print('The winner is O!')
-                elif self.result == '.':
-                    print("It's a tie!")
-
-
-                self.initialize_game()
-                return
-
-            if self.player_turn == 'X':
-
-                while True:
-                    start = time.time()
-                    (m, qx, qy) = self.min_alpha_beta(-2, 2)
-                    end = time.time()
-                    print('Evaluation time: {}s'.format(round(end - start, 7)))
-                    print('Recommended move: X = {}, Y = {}'.format(qx, qy))
-
-                    px = int(input('Insert the X coordinate: '))
-                    py = int(input('Insert the Y coordinate: '))
-
-                    qx = px
-                    qy = py
-
-                    if self.is_valid(px, py):
-                        self.current_state[px][py] = 'X'
-                        self.player_turn = 'O'
-                        break
-                    else:
-                        print('The move is not valid! Try again.')
-
-            else:
-                (m, px, py) = self.max_alpha_beta(-2, 2)
-                self.current_state[px][py] = 'O'
-                self.player_turn = 'X'
-
-
-
-def main():
-    g = Game()
-    g.play_alpha_beta()
-
+# Run the game
 if __name__ == "__main__":
-    main()
+    play_game()
+
 ```
 <hr>
 <h2>Sample Input and Output:</h2>
 
-![image](https://github.com/natsaravanan/19AI405FUNDAMENTALSOFARTIFICIALINTELLIGENCE/assets/87870499/8d5e329a-9aff-41a6-bcf0-46efa10e1b92)
-![image](https://github.com/natsaravanan/19AI405FUNDAMENTALSOFARTIFICIALINTELLIGENCE/assets/87870499/438b242d-54ba-443e-b040-a936e6ae3b55)
-![image](https://github.com/natsaravanan/19AI405FUNDAMENTALSOFARTIFICIALINTELLIGENCE/assets/87870499/99a33390-fa11-4ade-a19f-e93bcd7aaec9)
-![image](https://github.com/natsaravanan/19AI405FUNDAMENTALSOFARTIFICIALINTELLIGENCE/assets/87870499/440797bd-53cb-49c1-b18d-89776864c3e7)
-![image](https://github.com/natsaravanan/19AI405FUNDAMENTALSOFARTIFICIALINTELLIGENCE/assets/87870499/81575a16-26b2-46f1-a8ac-27c9ed0a0fe5)
+<img width="357" height="571" alt="image" src="https://github.com/user-attachments/assets/39cefdca-c076-4d41-a431-41be6da84183" />
+
+<img width="409" height="658" alt="image" src="https://github.com/user-attachments/assets/877e46ca-fae9-4c58-bb35-7939448ed13e" />
+
+<img width="329" height="169" alt="image" src="https://github.com/user-attachments/assets/86d8eee0-0e48-486d-91dc-aa9f49c7fce1" />
+
 
 ## RESULT
 We have successfully implemented Alpha-beta pruning of Minimax Search Algorithm for a Simple TIC-TAC-TOE game.
